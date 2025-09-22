@@ -44,6 +44,8 @@ htmlcov/
 .tox/
 .nox/
 
+uv.lock
+
 # Test results
 test_results/*
 !test_results/.gitkeep
