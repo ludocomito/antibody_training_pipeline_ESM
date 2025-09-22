@@ -1,0 +1,62 @@
+# Configuration file for Antibody Training Pipeline with ESM embeddings
+
+# Model configuration
+model:
+  name: "facebook/esm1v_t33_650M_UR90S_1"  # ESM-1V model from HuggingFace
+  device: "cpu"  # [cuda, cpu, mps] - temporarily using CPU due to torch version
+
+# Data configuration
+data:
+  train_file: sample_data.csv  # Path to training data (sequences and labels)
+  val_file: null    # Path to validation data (optional)
+  test_file: null   # Path to test data (optional)
+  
+  # Data format options
+  sequence_column: "sequence"  # Column name for protein sequences
+  label_column: "label"       # Column name for binary labels
+  
+  # Data preprocessing
+  max_sequence_length: 1024   # Maximum sequence length for ESM tokenizer
+  validation_split: 0.2       # Fraction of data to use for validation if no val_file provided
+  
+  # Data storage
+  save_embeddings: true       # Whether to save computed embeddings
+  embeddings_cache_dir: "./embeddings_cache"  # Directory to cache embeddings
+
+# Classifier configuration
+classifier:
+  type: "logistic_regression"
+  max_iter: 1000              # Maximum iterations for logistic regression
+  random_state: 42            # Random seed for reproducibility
+  
+  # Cross-validation settings
+  cv_folds: 5                 # Number of folds for cross-validation
+  stratify: true              # Whether to use stratified CV
+
+# Training configuration
+training:
+  # Evaluation metrics
+  metrics: ["accuracy", "precision", "recall", "f1", "roc_auc"]
+  
+  # Model saving
+  save_model: true
+  model_save_path: "./models/antibody_classifier.pkl"
+  
+  # Logging
+  log_level: "INFO"           # Logging level: DEBUG, INFO, WARNING, ERROR
+  log_file: "./logs/training.log"  # Log file path
+  
+  # Performance optimization
+  batch_size: 32              # Batch size for embedding extraction
+  num_workers: 4              # Number of workers for data loading
+
+# Experiment tracking (optional)
+experiment:
+  name: "antibody_classification"
+  description: "Binary classification of antibody sequences using ESM-1V embeddings"
+  tags: ["antibody", "esm", "classification"]
+  
+# Hardware configuration
+hardware:
+  gpu_memory_fraction: 0.8    # Fraction of GPU memory to use
+  clear_cache_frequency: 100  # Clear GPU cache every N sequences
