@@ -30,7 +30,7 @@ This guide explains how to use the antibody classification pipeline with ESM-1V 
 ```yaml
 model:
   name: "facebook/esm1v_t33_650M_UR90S_1"  # ESM model to use
-  device: "cuda"  # or "cpu"
+  device: "cuda"  # or "cpu"/"mps"
 ```
 
 ### Data Configuration
@@ -51,8 +51,6 @@ classifier:
   type: "logistic_regression"
   max_iter: 1000                         # Max iterations for LogReg
   random_state: 42                       # Reproducibility seed
-  cv_folds: 5                           # Cross-validation folds
-  stratify: true                        # Stratified CV
 ```
 
 ### Training Configuration
