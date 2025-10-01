@@ -26,9 +26,12 @@ class BinaryClassifier:
             random_state=params['random_state'], 
             max_iter=params['max_iter']
         )
+        print(f"Classifier initialized with random state: {random_state}")
         self.random_state = random_state
         self.is_fitted = False
         self.device = self.embedding_extractor.device
+        self.model_name = params['model_name']  # Store for recreation
+        self.max_iter = params['max_iter']
     
     def fit(self, X: np.ndarray, y: np.ndarray):
         """
@@ -94,3 +97,16 @@ class BinaryClassifier:
             
         X_scaled = self.scaler.transform(X)
         return self.classifier.score(X_scaled, y)
+    
+    def __getstate__(self):
+        """Custom pickle method - don't save the ESM model"""
+        state = self.__dict__.copy()
+        # Remove the embedding_extractor (it will be recreated on load)
+        state.pop('embedding_extractor', None)
+        return state
+    
+    def __setstate__(self, state):
+        """Custom unpickle method - recreate ESM model with correct config"""
+        self.__dict__.update(state)
+        # Recreate embedding extractor with fixed configuration
+        self.embedding_extractor = ESMEmbeddingExtractor(self.model_name, self.device)

@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import Dict, Tuple, Optional, List, Any
-from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
+from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score, 
     roc_auc_score, classification_report, confusion_matrix
@@ -20,6 +20,7 @@ from sklearn.metrics import (
 from model import ESMEmbeddingExtractor
 from classifier import BinaryClassifier
 from data import preprocess_raw_data, store_preprocessed_data, load_preprocessed_data
+import shutil
 
 def setup_logging(config: Dict) -> logging.Logger:
     """Setup logging configuration"""
@@ -47,12 +48,12 @@ def load_config(config_path: str) -> Dict:
         config = yaml.safe_load(f)
     return config
 
-def load_data(config: Dict, logger: logging.Logger) -> Tuple[List[str], List[int], Optional[List[str]], Optional[List[int]]]:
+def load_data(config: Dict, logger: logging.Logger) -> Tuple[List[str], List[int]]:
     """
-    Load training and validation data from files
+    Load training data from file
     
     Returns:
-        X_train, y_train, X_val, y_val (validation data may be None)
+        X_train, y_train
     """
     data_config = config['data']
     
@@ -68,38 +69,8 @@ def load_data(config: Dict, logger: logging.Logger) -> Tuple[List[str], List[int
     
     logger.info(f"Loaded {len(X_train)} training samples")
     
-    # Load validation data if provided
-    X_val, y_val = None, None
-    if data_config['val_file'] is not None:
-        logger.info(f"Loading validation data from {data_config['val_file']}")
-        val_df = pd.read_csv(data_config['val_file'])
-        X_val = val_df[data_config['sequence_column']].tolist()
-        y_val = val_df[data_config['label_column']].tolist()
-        logger.info(f"Loaded {len(X_val)} validation samples")
-    
-    return X_train, y_train, X_val, y_val
+    return X_train, y_train
 
-def create_train_val_split(
-    X: List[str], 
-    y: List[int], 
-    config: Dict, 
-    logger: logging.Logger
-) -> Tuple[List[str], List[str], List[int], List[int]]:
-    """Create train/validation split if no validation file provided"""
-    val_split = config['data']['validation_split']
-    random_state = config['classifier']['random_state']
-    
-    logger.info(f"Creating train/validation split with {val_split:.1%} validation data")
-    
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, y, 
-        test_size=val_split, 
-        random_state=random_state, 
-        stratify=y
-    )
-    
-    logger.info(f"Train samples: {len(X_train)}, Validation samples: {len(X_val)}")
-    return X_train, X_val, y_train, y_val
 
 def get_or_create_embeddings(
     sequences: List[str], 
@@ -109,27 +80,41 @@ def get_or_create_embeddings(
     logger: logging.Logger
 ) -> np.ndarray:
     """Get embeddings from cache or create them"""
-    cache_file = os.path.join(cache_path, f"{dataset_name}_embeddings.pkl")
+    import hashlib
+    
+    # Create a hash of the sequences to ensure cache validity
+    # Now that we have fixed data splits, this ensures we cache the right sequences
+    sequences_str = '|'.join(sequences)  # Keep original order since split is now fixed
+    sequences_hash = hashlib.md5(sequences_str.encode()).hexdigest()[:8]
+    cache_file = os.path.join(cache_path, f"{dataset_name}_{sequences_hash}_embeddings.pkl")
     
     if os.path.exists(cache_file):
         logger.info(f"Loading cached embeddings from {cache_file}")
         with open(cache_file, 'rb') as f:
-            embeddings = pickle.load(f)
+            cached_data = pickle.load(f)
         
-        if len(embeddings) == len(sequences):
-            logger.info(f"Using cached embeddings for {len(sequences)} sequences")
-            return embeddings
+        # Verify the cached sequences match exactly
+        if (len(cached_data['embeddings']) == len(sequences) and 
+            cached_data['sequences_hash'] == sequences_hash):
+            logger.info(f"Using cached embeddings for {len(sequences)} sequences (hash: {sequences_hash})")
+            return cached_data['embeddings']
         else:
-            logger.warning("Cached embeddings size mismatch, recomputing...")
+            logger.warning("Cached embeddings hash mismatch, recomputing...")
     
     logger.info(f"Computing embeddings for {len(sequences)} sequences...")
     embeddings = embedding_extractor.extract_batch_embeddings(sequences)
     
-    # Cache the embeddings
+    # Cache the embeddings with metadata for verification
     os.makedirs(cache_path, exist_ok=True)
+    cache_data = {
+        'embeddings': embeddings,
+        'sequences_hash': sequences_hash,
+        'num_sequences': len(sequences),
+        'dataset_name': dataset_name
+    }
     with open(cache_file, 'wb') as f:
-        pickle.dump(embeddings, f)
-    logger.info(f"Cached embeddings to {cache_file}")
+        pickle.dump(cache_data, f)
+    logger.info(f"Cached embeddings to {cache_file} (hash: {sequences_hash})")
     
     return embeddings
 
@@ -227,13 +212,21 @@ def perform_cross_validation(
     
     return cv_results
 
-def save_model(classifier: BinaryClassifier, config: Dict, logger: logging.Logger):
-    """Save trained model"""
-    if not config['training']['save_model']:
-        return
+def save_model(classifier: BinaryClassifier, config: Dict, logger: logging.Logger) -> str:
+    """Save trained model
     
-    model_path = config['training']['model_save_path']
-    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    Returns:
+        Path to the saved model
+    """
+    if not config['training']['save_model']:
+        return None
+    
+    # Build model path from model_name and model_save_dir
+    model_name = config['training']['model_name']
+    model_save_dir = config['training']['model_save_dir']
+    model_path = os.path.join(model_save_dir, f"{model_name}.pkl")
+    
+    os.makedirs(model_save_dir, exist_ok=True)
     
     logger.info(f"Saving model to {model_path}")
     
@@ -242,6 +235,7 @@ def save_model(classifier: BinaryClassifier, config: Dict, logger: logging.Logge
         pickle.dump(classifier, f)
     
     logger.info("Model saved successfully")
+    return model_path
 
 def train_model(config_path: str = "config.yaml") -> Dict[str, Any]:
     """
@@ -263,11 +257,7 @@ def train_model(config_path: str = "config.yaml") -> Dict[str, Any]:
     
     try:
         # Load data
-        X_train, y_train, X_val, y_val = load_data(config, logger)
-        
-        # Create train/val split if no validation data provided
-        if X_val is None:
-            X_train, X_val, y_train, y_val = create_train_val_split(X_train, y_train, config, logger)
+        X_train, y_train = load_data(config, logger)
         
         # Initialize embedding extractor and classifier
         logger.info("Initializing ESM embedding extractor and classifier")
@@ -283,37 +273,34 @@ def train_model(config_path: str = "config.yaml") -> Dict[str, Any]:
             X_train, classifier.embedding_extractor, cache_dir, "train", logger
         )
         
-        X_val_embedded = get_or_create_embeddings(
-            X_val, classifier.embedding_extractor, cache_dir, "val", logger
-        )
-        
-        # Convert labels to numpy arrays
+        # Convert labels to numpy array
         y_train = np.array(y_train)
-        y_val = np.array(y_val)
         
-        # Train the classifier
-        logger.info("Training classifier...")
+        # Perform cross-validation on full training data
+        logger.info("Performing cross-validation on training data...")
+        cv_results = perform_cross_validation(classifier, X_train_embedded, y_train, config, logger)
+        
+        # Train final model on full training set
+        logger.info("Training final model on full training set...")
         classifier.fit(X_train_embedded, y_train)
         logger.info("Training completed")
         
-        # Evaluate on training and validation sets
+        # Evaluate final model on training set
         metrics = config['training']['metrics']
         train_results = evaluate_model(classifier, X_train_embedded, y_train, "Training", metrics, logger)
-        val_results = evaluate_model(classifier, X_val_embedded, y_val, "Validation", metrics, logger)
-        
-        # Perform cross-validation
-        cv_results = perform_cross_validation(classifier, X_train_embedded, y_train, config, logger)
         
         # Save model
-        save_model(classifier, config, logger)
+        model_path = save_model(classifier, config, logger)
+        
+        # Delete cached embeddings
+        shutil.rmtree(cache_dir)
         
         # Compile results
         results = {
             'train_metrics': train_results,
-            'val_metrics': val_results,
             'cv_metrics': cv_results,
             'config': config,
-            'model_path': config['training']['model_save_path'] if config['training']['save_model'] else None
+            'model_path': model_path
         }
         
         logger.info("Training pipeline completed successfully")
@@ -323,9 +310,12 @@ def train_model(config_path: str = "config.yaml") -> Dict[str, Any]:
         logger.error(f"Training failed with error: {str(e)}")
         raise
 
+
+
 if __name__ == "__main__":
     import sys
     
     config_path = sys.argv[1] if len(sys.argv) > 1 else "config.yaml"
     results = train_model(config_path)
+    
     print("Training completed successfully!")

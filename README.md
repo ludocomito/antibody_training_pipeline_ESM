@@ -25,10 +25,4 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```bash
 # Intall via uv
 uv sync
-
-# Install main dependencies
-uv pip install -e .
-
-# Install with development dependencies
-uv pip install -e ".[dev]"
 ```
