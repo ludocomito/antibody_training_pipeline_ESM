@@ -81,7 +81,6 @@ def print_pipeline_info(config):
     print(f"Random State: {config['classifier']['random_state']}")
     print(f"Max Iterations: {config['classifier']['max_iter']}")
     print(f"Cross-validation Folds: {config['classifier']['cv_folds']}")
-    print(f"Validation Split: {config['data']['validation_split']:.1%}")
     print(f"Metrics: {', '.join(config['training']['metrics'])}")
     print(f"Log Level: {config['training']['log_level']}")
     
@@ -89,11 +88,6 @@ def print_pipeline_info(config):
         print(f"Training Data: {config['data']['train_file']}")
     else:
         print("Training Data: Not specified (will need to be set in config)")
-    
-    if config['data']['val_file']:
-        print(f"Validation Data: {config['data']['val_file']}")
-    else:
-        print("Validation Data: Will use train/val split")
     
     print("=" * 60)
 
@@ -110,9 +104,9 @@ Examples:
 The pipeline will:
 1. Load protein sequences and binary labels from your data files
 2. Extract ESM-1V embeddings for each sequence
-3. Train a logistic regression classifier
-4. Evaluate performance using cross-validation
-5. Save the trained model for future use
+3. Perform k-fold cross-validation on training data
+4. Train final logistic regression classifier on full training set
+5. Save trained model
         """
     )
     
@@ -134,6 +128,7 @@ The pipeline will:
         action='store_true',
         help='Setup required directories and exit'
     )
+    
     
     args = parser.parse_args()
     
@@ -172,7 +167,7 @@ The pipeline will:
         # Setup directories
         setup_directories(args.config)
         
-        # Run training
+        # Run training pipeline
         print("\nStarting training pipeline...")
         results = train_model(args.config)
         
@@ -181,15 +176,16 @@ The pipeline will:
         print("TRAINING COMPLETED SUCCESSFULLY!")
         print("=" * 60)
         
-        if 'val_metrics' in results:
-            print("Final Validation Results:")
-            for metric, value in results['val_metrics'].items():
-                print(f"  {metric.upper()}: {value:.4f}")
-        
+        # Print results
         if 'cv_metrics' in results:
             print("\nCross-Validation Results:")
             for metric, values in results['cv_metrics'].items():
                 print(f"  {metric.upper()}: {values['mean']:.4f} (+/- {values['std']*2:.4f})")
+        
+        if 'train_metrics' in results:
+            print("\nFinal Training Results:")
+            for metric, value in results['train_metrics'].items():
+                print(f"  {metric.upper()}: {value:.4f}")
         
         if results.get('model_path'):
             print(f"\nModel saved to: {results['model_path']}")

@@ -3,11 +3,11 @@
 # Model configuration
 model:
   name: "facebook/esm1v_t33_650M_UR90S_1"  # ESM-1V model from HuggingFace
-  device: "cpu"  # [cuda, cpu, mps] - temporarily using CPU due to torch version
+  device: "mps"  # [cuda, cpu, mps] - temporarily using CPU due to torch version
 
 # Data configuration
 data:
-  train_file: sample_data.csv  # Path to training data (sequences and labels)
+  train_file: ./train_datasets/VH_only_training_ready.csv  # Path to training data (sequences and labels)
   val_file: null    # Path to validation data (optional)
   test_file: null   # Path to test data (optional)
   
@@ -17,7 +17,6 @@ data:
   
   # Data preprocessing
   max_sequence_length: 1024   # Maximum sequence length for ESM tokenizer
-  validation_split: 0.2       # Fraction of data to use for validation if no val_file provided
   
   # Data storage
   save_embeddings: true       # Whether to save computed embeddings
@@ -29,9 +28,9 @@ classifier:
   max_iter: 1000              # Maximum iterations for logistic regression
   random_state: 42            # Random seed for reproducibility
   
-  # Cross-validation settings
-  cv_folds: 5                 # Number of folds for cross-validation
-  stratify: true              # Whether to use stratified CV
+  # Cross-validation settings (performed on training data only)
+  cv_folds: 10                # Number of folds for cross-validation on training data
+  stratify: false              # Whether to use stratified CV
 
 # Training configuration
 training:
@@ -40,7 +39,8 @@ training:
   
   # Model saving
   save_model: true
-  model_save_path: "./models/antibody_classifier.pkl"
+  model_name: "vh_classifier"  # Name for the saved model (without extension)
+  model_save_dir: "./models"  # Directory to save models
   
   # Logging
   log_level: "INFO"           # Logging level: DEBUG, INFO, WARNING, ERROR
@@ -52,7 +52,7 @@ training:
 
 # Experiment tracking (optional)
 experiment:
-  name: "antibody_classification"
+  name: "vh_only"
   description: "Binary classification of antibody sequences using ESM-1V embeddings"
   tags: ["antibody", "esm", "classification"]
   

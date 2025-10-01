@@ -6,7 +6,7 @@ Contains the ESM-1V embedding extractor for protein sequences.
 import logging
 import torch
 import numpy as np
-from transformers import AutoModelForMaskedLM, AutoTokenizer
+from transformers import AutoModel,AutoModelForMaskedLM, AutoTokenizer
 from tqdm import tqdm
 from typing import List
 
@@ -17,7 +17,8 @@ class ESMEmbeddingExtractor:
     def __init__(self, model_name, device):
         self.model_name = model_name
         self.device = device
-        self.model = AutoModelForMaskedLM.from_pretrained(model_name)
+        # Load model with output_hidden_states enabled
+        self.model = AutoModel.from_pretrained(model_name, output_hidden_states=True)
         self.model.to(device)
         self.model.eval()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -44,12 +45,25 @@ class ESMEmbeddingExtractor:
             # Get embeddings
             with torch.no_grad():
                 outputs = self.model(**inputs, output_hidden_states=True)
-                # Use the last hidden state as embeddings
-                embeddings = outputs.hidden_states[-1].squeeze(0)  # Remove batch dimension
-                # Average over sequence length (excluding special tokens)
-                embeddings = embeddings[1:-1].mean(dim=0).cpu().numpy()  # Exclude CLS and SEP tokens
-            
-            return embeddings
+                # Check if hidden_states are available
+                if outputs.hidden_states is None:
+                    raise RuntimeError("Model did not output hidden_states. Please retrain the model with the fixed version.")
+                embeddings = outputs.hidden_states[-1]  # (batch, seq_len, hidden_dim)
+                
+                # Use attention mask to properly exclude padding and special tokens
+                attention_mask = inputs['attention_mask'].unsqueeze(-1)  # (batch, seq_len, 1)
+                
+                # Mask out special tokens (first and last)
+                attention_mask[:, 0, :] = 0  # CLS token
+                attention_mask[:, -1, :] = 0  # EOS token
+                
+                # Masked mean pooling
+                masked_embeddings = embeddings * attention_mask
+                sum_embeddings = masked_embeddings.sum(dim=1)  # Sum over sequence
+                sum_mask = attention_mask.sum(dim=1)  # Count valid tokens
+                mean_embeddings = sum_embeddings / sum_mask  # Average
+                
+                return mean_embeddings.squeeze(0).cpu().numpy()
             
         except Exception as e:
             logger.error(f"Error getting embeddings for sequence: {e}")
