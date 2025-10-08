@@ -191,6 +191,7 @@ def perform_cross_validation(
     cv_params = config['classifier'].copy()
     cv_params['model_name'] = config['model']['name']
     cv_params['device'] = config['model']['device']
+    cv_params['batch_size'] = config['training'].get('batch_size', 32)
     cv_classifier = BinaryClassifier(cv_params)
     
     # Accuracy
@@ -264,6 +265,7 @@ def train_model(config_path: str = "config.yaml") -> Dict[str, Any]:
         classifier_params = config['classifier'].copy()
         classifier_params['model_name'] = config['model']['name']  # Map 'name' to 'model_name'
         classifier_params['device'] = config['model']['device']
+        classifier_params['batch_size'] = config['training'].get('batch_size', 32)  # Get batch_size from training config
         classifier = BinaryClassifier(classifier_params)
         
         # Get or create embeddings
