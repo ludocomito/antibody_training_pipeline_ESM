@@ -85,12 +85,6 @@ python main.py --validate-only
 # Setup directories without training
 python main.py --setup-dirs
 
-# Run multi-seed experiment for statistical robustness
-python main.py --multi-seed
-
-# Multi-seed with custom config
-python main.py multi_seed_config.yaml --multi-seed
-
 # Get help
 python main.py --help
 ```
