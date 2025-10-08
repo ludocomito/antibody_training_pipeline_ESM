@@ -53,6 +53,8 @@ class TestConfig:
     output_dir: str = "./test_results"
     metrics: List[str] = None
     save_predictions: bool = True
+    batch_size: int = 32  # Batch size for embedding extraction
+    device: str = "cpu"  # Device to use for inference [cuda, cpu, mps]
     
     def __post_init__(self):
         if self.metrics is None:
@@ -101,7 +103,21 @@ class ModelTester:
         if not isinstance(model, BinaryClassifier):
             raise ValueError(f"Expected BinaryClassifier, got {type(model)}")
         
-        self.logger.info(f"Model loaded successfully: {model_path}")
+        # Update device if different from config
+        if hasattr(model, 'embedding_extractor') and model.embedding_extractor.device != self.config.device:
+            self.logger.info(f"Updating device from {model.embedding_extractor.device} to {self.config.device}")
+            # Recreate embedding extractor with new device
+            from model import ESMEmbeddingExtractor
+            batch_size = getattr(model, 'batch_size', 32)
+            model.embedding_extractor = ESMEmbeddingExtractor(model.model_name, self.config.device, batch_size)
+            model.device = self.config.device
+        
+        # Update batch_size if different from config
+        if hasattr(model, 'embedding_extractor') and model.embedding_extractor.batch_size != self.config.batch_size:
+            self.logger.info(f"Updating batch_size from {model.embedding_extractor.batch_size} to {self.config.batch_size}")
+            model.embedding_extractor.batch_size = self.config.batch_size
+        
+        self.logger.info(f"Model loaded successfully: {model_path} on device: {model.embedding_extractor.device}")
         return model
     
     def load_dataset(self, data_path: str) -> Tuple[List[str], List[int]]:
@@ -378,6 +394,9 @@ Examples:
     # Use configuration file
     python test.py --config test_config.yaml
     
+    # Override device and batch size
+    python test.py --config test_config.yaml --device cuda --batch-size 64
+    
     # Create sample configuration
     python test.py --create-config
         """
@@ -387,6 +406,8 @@ Examples:
     parser.add_argument('--data', nargs='+', help='Path(s) to test dataset CSV files')
     parser.add_argument('--config', help='Path to test configuration YAML file')
     parser.add_argument('--output-dir', default='./test_results', help='Output directory for results')
+    parser.add_argument('--device', choices=['cpu', 'cuda', 'mps'], help='Device to use for inference (overrides config)')
+    parser.add_argument('--batch-size', type=int, help='Batch size for embedding extraction (overrides config)')
     parser.add_argument('--create-config', action='store_true', help='Create sample configuration file')
     
     args = parser.parse_args()
@@ -408,6 +429,12 @@ Examples:
             data_paths=args.data,
             output_dir=args.output_dir
         )
+    
+    # Override config with command line arguments
+    if args.device:
+        config.device = args.device
+    if args.batch_size:
+        config.batch_size = args.batch_size
     
     # Run testing
     try:

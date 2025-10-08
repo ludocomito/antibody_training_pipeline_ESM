@@ -18,20 +18,27 @@ class BinaryClassifier:
             params: Dictionary containing the parameters for the classifier
         """
         random_state = params['random_state']
+        batch_size = params.get('batch_size', 32)  # Default to 32 if not provided
         
-        self.embedding_extractor = ESMEmbeddingExtractor(params['model_name'], params['device'])
+        self.embedding_extractor = ESMEmbeddingExtractor(params['model_name'], params['device'], batch_size)
         self.scaler = StandardScaler()
+        
+        # Get class_weight parameter if provided, otherwise use None (default)
+        class_weight = params.get('class_weight', None)
         
         self.classifier = LogisticRegression(
             random_state=params['random_state'], 
-            max_iter=params['max_iter']
+            max_iter=params['max_iter'],
+            class_weight="balanced"
         )
-        print(f"Classifier initialized with random state: {random_state}")
+        print(f"Classifier initialized with random state: {random_state}, class_weight: {class_weight}")
         self.random_state = random_state
         self.is_fitted = False
         self.device = self.embedding_extractor.device
         self.model_name = params['model_name']  # Store for recreation
         self.max_iter = params['max_iter']
+        self.class_weight = class_weight
+        self.batch_size = batch_size  # Store for recreation
     
     def fit(self, X: np.ndarray, y: np.ndarray):
         """
@@ -109,4 +116,5 @@ class BinaryClassifier:
         """Custom unpickle method - recreate ESM model with correct config"""
         self.__dict__.update(state)
         # Recreate embedding extractor with fixed configuration
-        self.embedding_extractor = ESMEmbeddingExtractor(self.model_name, self.device)
+        batch_size = getattr(self, 'batch_size', 32)  # Default to 32 if not stored (backwards compatibility)
+        self.embedding_extractor = ESMEmbeddingExtractor(self.model_name, self.device, batch_size)

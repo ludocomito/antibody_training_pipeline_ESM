@@ -27,7 +27,8 @@ classifier:
   type: "logistic_regression"
   max_iter: 1000              # Maximum iterations for logistic regression
   random_state: 42            # Random seed for reproducibility
-  
+  class_weight: "None"    # Class weight for logistic regression
+
   # Cross-validation settings (performed on training data only)
   cv_folds: 10                # Number of folds for cross-validation on training data
   stratify: false              # Whether to use stratified CV
@@ -39,7 +40,7 @@ training:
   
   # Model saving
   save_model: true
-  model_name: "vh_classifier"  # Name for the saved model (without extension)
+  model_name: "vh_classifier_BATCHED"  # Name for the saved model (without extension)
   model_save_dir: "./models"  # Directory to save models
   
   # Logging
@@ -47,7 +48,7 @@ training:
   log_file: "./logs/training.log"  # Log file path
   
   # Performance optimization
-  batch_size: 32              # Batch size for embedding extraction
+  batch_size: 8              # Batch size for embedding extraction
   num_workers: 4              # Number of workers for data loading
 
 # Experiment tracking (optional)
