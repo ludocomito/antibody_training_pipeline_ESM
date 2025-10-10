@@ -20,6 +20,7 @@ dependencies = [
     "scipy>=1.10.0",
     "pyparsing>=3.0.0",
     'plotly',
+    "jupyterlab>=4.4.9",
 ]
 
 [project.optional-dependencies]
