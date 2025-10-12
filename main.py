@@ -32,7 +32,7 @@ def setup_directories(config_path: str = "config.yaml"):
     directories = [
         os.path.dirname(config['training']['log_file']),
         config['data']['embeddings_cache_dir'],
-        os.path.dirname(config['training']['model_save_path']),
+        os.path.dirname(config['training']['model_save_dir']),
     ]
     
     for directory in directories:
