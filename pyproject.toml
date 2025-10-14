@@ -9,6 +9,7 @@ description = "Antibody developability analysis using ESM protein language model
 requires-python = ">=3.9"
 dependencies = [
     "torch>=2.6.0",
+    "tqdm",
     "transformers>=4.30.0",
     "numpy>=1.24.0",
     "pandas>=2.0.0",
@@ -16,8 +17,11 @@ dependencies = [
     "tqdm>=4.65.0",
     "PyYAML>=6.0.0",
     "matplotlib>=3.7.0",
+    "more-itertools",
+    "riot_na",
     "seaborn>=0.12.0",
     "scipy>=1.10.0",
+    "pandas",
     "pyparsing>=3.0.0",
     'plotly',
     "jupyterlab>=4.4.9",
