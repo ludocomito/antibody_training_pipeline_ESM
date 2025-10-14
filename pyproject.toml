@@ -21,6 +21,7 @@ dependencies = [
     "pyparsing>=3.0.0",
     'plotly',
     "jupyterlab>=4.4.9",
+    "datasets>=4.2.0",
 ]
 
 [project.optional-dependencies]
