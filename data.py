@@ -3,6 +3,8 @@ import pickle
 import numpy as np
 from typing import List, Tuple, Dict, Optional, Any
 from sklearn.preprocessing import StandardScaler
+from datasets import load_dataset
+
 
 logger = logging.getLogger(__name__)
 
@@ -67,3 +69,28 @@ def load_preprocessed_data(filename: str) -> Dict:
     """
     with open(filename, 'rb') as f:
         return pickle.load(f)
+    
+def load_hf_dataset(
+    dataset_name: str,
+    split: str,
+    text_column: str,
+    label_column: str,
+) -> Tuple[List[str], List[Any]]:
+    """
+    Load a dataset from Hugging Face datasets library.
+
+    Args:
+        dataset_name: Name of the dataset to load
+        split: Which split to load (e.g., 'train', 'test', 'validation')
+        text_column: Name of the column containing the sequences
+        label_column: Name of the column containing the labels
+
+    Returns:
+        X: List of input sequences (strings)
+        y: List or array of labels
+    """
+    dataset = load_dataset(dataset_name, split=split)
+    X = dataset[text_column]
+    y = dataset[label_column]
+
+    return list(X), list(y)
