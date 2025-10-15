@@ -4,22 +4,45 @@ This guide explains how to use the antibody classification pipeline with ESM-1V 
 
 ## Quick Start
 
+# Configure Dataset source
+## Option 1: local dataset
 1. **Prepare your data**:
-   Create a CSV file with your antibody sequences and binary labels:
-   ```csv
-   sequence,label
-   QVQLVQSGAEVKKPGASVKVSCKASGYTFTSYYMHWVRQAPGQGLEWMGWINPNSGGTNYAQKFQGRVTMTRDTSISTAYMELSRLRSDDTAVYYCARSTYYGGDWYFNVWGQGTLVTVSS,1
-   EVQLLESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCARQHYDWPWGQGTLVTVSS,0
-   ```
+
+  Create a CSV file with your antibody sequences and binary labels:
+  ```csv
+  sequence,label
+  QVQLVQSGAEVKKPGASVKVSCKASGYTFTSYYMHWVRQAPGQGLEWMGWINPNSGGTNYAQKFQGRVTMTRDTSISTAYMELSRLRSDDTAVYYCARSTYYGGDWYFNVWGQGTLVTVSS,1
+  EVQLLESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCARQHYDWPWGQGTLVTVSS,0
+  ```
 
 2. **Update configuration**:
-   Edit `config.yaml` to point to your data file:
-   ```yaml
-   data:
-     train_file: "path/to/your/training_data.csv"
-   ```
+  Edit `config.yaml` to point to your data file:
+  ```yaml
+  data:
+    train_file: "path/to/your/training_data.csv"
+  ```
+3. **update source**
+  Edit load_data in `train.py` 
+  ```python
+  load_data(config, source='local')
+  ```
 
-3. **Run training**:
+## Option 2: HuggingFace dataset
+
+1. **Update configuration**:
+  Edit `config.yaml` with dataset name:
+  ```yaml
+  data:
+    dataset_name: "VH_dataset"
+  ```
+
+2. **update source**
+  Edit load_data in `train.py` 
+  ```python
+  load_data(config, source='hf')
+  ```
+
+# Run training pipeline
    ```bash
    python main.py
    ```
