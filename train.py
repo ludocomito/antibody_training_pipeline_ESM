@@ -235,7 +235,7 @@ def train_model(config_path: str = "config.yaml") -> Dict[str, Any]:
     
     try:
         # Load data
-        X_train, y_train = load_data(config, source="local")
+        X_train, y_train = load_data(config)
 
         logger.info(f"Loaded {len(X_train)} training samples")
 
