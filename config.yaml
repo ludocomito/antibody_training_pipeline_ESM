@@ -7,6 +7,8 @@ model:
 
 # Data configuration
 data:
+  source: "local" # Data source type: local, HF
+  dataset_name: "VH_dataset"
   train_file: ./train_datasets/VH_only_training_ready.csv  # Path to training data (sequences and labels)
   val_file: null    # Path to validation data (optional)
   test_file: null   # Path to test data (optional)

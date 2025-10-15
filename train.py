@@ -19,7 +19,7 @@ from sklearn.metrics import (
 
 from model import ESMEmbeddingExtractor
 from classifier import BinaryClassifier
-from data import preprocess_raw_data, store_preprocessed_data, load_preprocessed_data
+from data import load_data
 import shutil
 
 def setup_logging(config: Dict) -> logging.Logger:
@@ -47,29 +47,6 @@ def load_config(config_path: str) -> Dict:
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     return config
-
-def load_data(config: Dict, logger: logging.Logger) -> Tuple[List[str], List[int]]:
-    """
-    Load training data from file
-    
-    Returns:
-        X_train, y_train
-    """
-    data_config = config['data']
-    
-    if data_config['train_file'] is None:
-        raise ValueError("train_file must be specified in config")
-    
-    # Load training data
-    logger.info(f"Loading training data from {data_config['train_file']}")
-    train_df = pd.read_csv(data_config['train_file'])
-    
-    X_train = train_df[data_config['sequence_column']].tolist()
-    y_train = train_df[data_config['label_column']].tolist()
-    
-    logger.info(f"Loaded {len(X_train)} training samples")
-    
-    return X_train, y_train
 
 
 def get_or_create_embeddings(
@@ -258,8 +235,10 @@ def train_model(config_path: str = "config.yaml") -> Dict[str, Any]:
     
     try:
         # Load data
-        X_train, y_train = load_data(config, logger)
-        
+        X_train, y_train = load_data(config)
+
+        logger.info(f"Loaded {len(X_train)} training samples")
+
         # Initialize embedding extractor and classifier
         logger.info("Initializing ESM embedding extractor and classifier")
         classifier_params = config['classifier'].copy()

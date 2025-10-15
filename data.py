@@ -1,8 +1,11 @@
 import logging
 import pickle
 import numpy as np
-from typing import List, Tuple, Dict, Optional, Any
+from typing import List, Tuple, Dict, Optional, Any, Literal
 from sklearn.preprocessing import StandardScaler
+import pandas as pd
+from datasets import load_dataset
+
 
 logger = logging.getLogger(__name__)
 
@@ -67,3 +70,78 @@ def load_preprocessed_data(filename: str) -> Dict:
     """
     with open(filename, 'rb') as f:
         return pickle.load(f)
+    
+def load_hf_dataset(
+    dataset_name: str,
+    split: str,
+    text_column: str,
+    label_column: str,
+) -> Tuple[List[str], List[Any]]:
+    """
+    Load a dataset from Hugging Face datasets library.
+
+    Args:
+        dataset_name: Name of the dataset to load
+        split: Which split to load (e.g., 'train', 'test', 'validation')
+        text_column: Name of the column containing the sequences
+        label_column: Name of the column containing the labels
+
+    Returns:
+        X: List of input sequences (strings)
+        y: List or array of labels
+    """
+    dataset = load_dataset(dataset_name, split=split)
+    X = dataset[text_column]
+    y = dataset[label_column]
+
+    return list(X), list(y)
+
+def load_local_data(
+        file_path: str,
+        text_column: str,
+        label_column: str
+    ) -> Tuple[List[str], List[Any]]:
+    """
+    Load training data from file
+    
+    args:
+        file_path: Path to the local data file (CSV format)
+        text_column: Name of the column containing the sequences
+        label_column: Name of the column containing the labels
+
+    Returns:
+        X_train, y_train
+    """
+
+    train_df = pd.read_csv(file_path)
+    X_train = train_df[text_column].tolist()
+    y_train = train_df[label_column].tolist()
+
+    return X_train, y_train
+
+def load_data(config: Dict) -> Tuple[List[str], List[int]]:
+    """
+    Load training data from either Hugging Face datasets or local file based on source parameter
+    
+    args:
+        config: Configuration dictionary containing data parameters
+
+    Returns:
+        X_train, y_train
+    """
+    data_config = config['data']
+    if data_config['source'] == "hf":
+        return load_hf_dataset(
+            dataset_name=data_config['dataset_name'],
+            split=data_config['train_split'],
+            text_column=data_config['sequence_column'],
+            label_column=data_config['label_column']
+        )
+    elif data_config['source'] == "local":
+        return load_local_data(
+            data_config['file_path'],
+            text_column=data_config['sequence_column'],
+            label_column=data_config['label_column']
+        )
+    else:
+        raise ValueError(f"Unknown data source: {source}")
