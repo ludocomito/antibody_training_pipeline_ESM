@@ -1,8 +1,9 @@
 import logging
 import pickle
 import numpy as np
-from typing import List, Tuple, Dict, Optional, Any
+from typing import List, Tuple, Dict, Optional, Any, Literal
 from sklearn.preprocessing import StandardScaler
+import pandas as pd
 from datasets import load_dataset
 
 
@@ -94,3 +95,54 @@ def load_hf_dataset(
     y = dataset[label_column]
 
     return list(X), list(y)
+
+def load_local_data(
+        file_path: str,
+        text_column: str,
+        label_column: str
+    ) -> Tuple[List[str], List[Any]]:
+    """
+    Load training data from file
+    
+    args:
+        file_path: Path to the local data file (CSV format)
+        text_column: Name of the column containing the sequences
+        label_column: Name of the column containing the labels
+
+    Returns:
+        X_train, y_train
+    """
+
+    train_df = pd.read_csv(file_path)
+    X_train = train_df[text_column].tolist()
+    y_train = train_df[label_column].tolist()
+
+    return X_train, y_train
+
+def load_data(config: Dict, *, source: Literal['hf', 'local']) -> Tuple[List[str], List[int]]:
+    """
+    Load training data from either Hugging Face datasets or local file based on source parameter
+    
+    args:
+        config: Configuration dictionary containing data parameters
+        source: 'hf' to load from Hugging Face datasets, 'local' to load from local file
+
+    Returns:
+        X_train, y_train
+    """
+    data_config = config['data']
+    if source == 'hf':
+        return load_hf_dataset(
+            dataset_name=data_config['dataset_name'],
+            split=data_config['train_split'],
+            text_column=data_config['sequence_column'],
+            label_column=data_config['label_column']
+        )
+    elif source == 'local':
+        return load_local_data(
+            data_config['file_path'],
+            text_column=data_config['sequence_column'],
+            label_column=data_config['label_column']
+        )
+    else:
+        raise ValueError(f"Unknown data source: {source}")

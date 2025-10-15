@@ -19,7 +19,7 @@ from sklearn.metrics import (
 
 from model import ESMEmbeddingExtractor
 from classifier import BinaryClassifier
-from data import preprocess_raw_data, store_preprocessed_data, load_preprocessed_data, load_hf_dataset
+from data import load_data
 import shutil
 
 def setup_logging(config: Dict) -> logging.Logger:
@@ -235,11 +235,8 @@ def train_model(config_path: str = "config.yaml") -> Dict[str, Any]:
     
     try:
         # Load data
-        X_train, y_train = load_hf_dataset(config['dataset'],
-                                           config['data']['train_split'],
-                                           config['data']['sequence_column'],
-                                           config['data']['label_column']
-                                           )
+        X_train, y_train = load_data(config, source="local")
+
         logger.info(f"Loaded {len(X_train)} training samples")
 
         # Initialize embedding extractor and classifier
