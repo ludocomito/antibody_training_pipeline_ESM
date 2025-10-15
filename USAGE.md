@@ -22,9 +22,10 @@ This guide explains how to use the antibody classification pipeline with ESM-1V 
     train_file: "path/to/your/training_data.csv"
   ```
 3. **update source**
-  Edit load_data in `train.py` 
-  ```python
-  load_data(config, source='local')
+  Edit `config.yaml` with the desired source:
+  ```yaml
+  data:
+    source: "local"
   ```
 
 ## Option 2: HuggingFace dataset
@@ -37,9 +38,10 @@ This guide explains how to use the antibody classification pipeline with ESM-1V 
   ```
 
 2. **update source**
-  Edit load_data in `train.py` 
-  ```python
-  load_data(config, source='hf')
+  Edit `config.yaml` with the desired source:
+  ```yaml
+  data:
+    source: "hf"
   ```
 
 # Run training pipeline
