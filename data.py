@@ -119,26 +119,25 @@ def load_local_data(
 
     return X_train, y_train
 
-def load_data(config: Dict, *, source: Literal['hf', 'local']) -> Tuple[List[str], List[int]]:
+def load_data(config: Dict) -> Tuple[List[str], List[int]]:
     """
     Load training data from either Hugging Face datasets or local file based on source parameter
     
     args:
         config: Configuration dictionary containing data parameters
-        source: 'hf' to load from Hugging Face datasets, 'local' to load from local file
 
     Returns:
         X_train, y_train
     """
     data_config = config['data']
-    if source == 'hf':
+    if data_config['source'] == "hf":
         return load_hf_dataset(
             dataset_name=data_config['dataset_name'],
             split=data_config['train_split'],
             text_column=data_config['sequence_column'],
             label_column=data_config['label_column']
         )
-    elif source == 'local':
+    elif data_config['source'] == "local":
         return load_local_data(
             data_config['file_path'],
             text_column=data_config['sequence_column'],
