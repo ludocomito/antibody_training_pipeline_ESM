@@ -96,3 +96,10 @@ outputs/
 
 # Literature and documentation
 literature/
+
+# Test dataset source files (users download these manually)
+test_datasets/*.xlsx
+test_datasets/*.pdf
+test_datasets/pnas*.xlsx
+test_datasets/mmc*.xlsx
+test_datasets/harvey.*
