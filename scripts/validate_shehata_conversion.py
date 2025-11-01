@@ -214,12 +214,12 @@ def main():
         print(f"\nGenerated CSV ({csv_path.name}):")
         print(f"  Total rows: {len(df_csv)}")
         print(f"  Columns: {list(df_csv.columns)}")
-        print(f"\n  Label distribution:")
+        print("\n  Label distribution:")
         for label, count in df_csv["label"].value_counts().sort_index().items():
             label_name = "Specific" if label == 0 else "Non-specific"
             print(f"    {label_name}: {count} ({count/len(df_csv)*100:.1f}%)")
 
-        print(f"\n  Missing data:")
+        print("\n  Missing data:")
         print(f"    Missing heavy_seq: {df_csv['heavy_seq'].isna().sum()}")
         print(f"    Missing light_seq: {df_csv['light_seq'].isna().sum()}")
         print(f"    Missing labels: {df_csv['label'].isna().sum()}")

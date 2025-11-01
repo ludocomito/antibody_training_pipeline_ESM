@@ -161,7 +161,7 @@ def convert_excel_to_csv(
         # Based on paper: "7 out of 398 antibodies characterised as non-specific"
         # This is roughly 1.76% = 98.24th percentile
         suggested_threshold = psr_numeric.quantile(0.9824)
-        print(f"\n  Paper reports: 7/398 non-specific (~1.76%)")
+        print("\n  Paper reports: 7/398 non-specific (~1.76%)")
         print(f"  Suggested threshold (98.24th percentile): {suggested_threshold:.4f}")
 
         if interactive:
@@ -251,13 +251,13 @@ def compare_with_original(csv_df: pd.DataFrame, excel_path: str):
     ).reset_index(drop=True)
 
     # Check row counts
-    print(f"\nRow count check:")
+    print("\nRow count check:")
     print(f"  Excel: {len(df_excel)}")
     print(f"  CSV: {len(csv_df)}")
     print(f"  Match: {'✓ YES' if len(df_excel) == len(csv_df) else '✗ NO'}")
 
     # Spot check sequences
-    print(f"\nSpot checking first 3 sequences...")
+    print("\nSpot checking first 3 sequences...")
     for i in range(min(3, len(csv_df))):
         excel_vh = df_excel.loc[i, "VH Protein"]
         csv_vh = csv_df.loc[i, "heavy_seq"]
@@ -297,10 +297,10 @@ def main():
     print("\n" + "=" * 60)
     print("✓ Conversion complete!")
     print("=" * 60)
-    print(f"\nNext steps:")
+    print("\nNext steps:")
     print(f"  1. Review {output_path}")
-    print(f"  2. Compare with test_datasets/jain.csv format")
-    print(f"  3. Test loading with data.load_local_data()")
+    print("  2. Compare with test_datasets/jain.csv format")
+    print("  3. Test loading with data.load_local_data()")
 
 
 if __name__ == "__main__":
