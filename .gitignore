@@ -93,3 +93,10 @@ data/
 models/
 logs/
 outputs/
+
+# Literature markdown conversions (for personal reference only)
+literature/markdown/
+
+# Raw data files (download from paper supplementary materials)
+test_datasets/*.xlsx
+test_datasets/*.xls
