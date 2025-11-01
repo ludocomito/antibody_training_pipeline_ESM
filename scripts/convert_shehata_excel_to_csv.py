@@ -8,7 +8,6 @@ This script performs a careful conversion with validation:
 3. Validates data integrity
 4. Outputs shehata.csv
 
-Author: Ray
 Date: 2025-10-31
 Issue: #3 - Shehata dataset preprocessing
 """

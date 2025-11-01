@@ -10,7 +10,6 @@ Methods:
 2. Direct openpyxl reading
 3. CSV checksum validation
 
-Author: Ray
 Date: 2025-10-31
 """
 
