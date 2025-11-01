@@ -32,7 +32,9 @@ from convert_jain_excel_to_csv import (  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate the Jain dataset conversion output.")
+    parser = argparse.ArgumentParser(
+        description="Validate the Jain dataset conversion output."
+    )
     parser.add_argument(
         "--csv",
         type=Path,
@@ -100,7 +102,9 @@ def main() -> None:
     regenerated_sorted = regenerated.sort_values("id").reset_index(drop=True)
     csv_sorted = csv_df.sort_values("id").reset_index(drop=True)
 
-    pdt.assert_frame_equal(regenerated_sorted, csv_sorted, check_dtype=False, check_like=True)
+    pdt.assert_frame_equal(
+        regenerated_sorted, csv_sorted, check_dtype=False, check_like=True
+    )
 
     # High-level stats
     print("=" * 60)
@@ -108,11 +112,15 @@ def main() -> None:
     print("=" * 60)
     print(f"Rows: {len(csv_df)}, Columns: {len(csv_df.columns)}")
     print(f"Flag distribution:\n{csv_df['flag_category'].value_counts().sort_index()}")
-    print(f"Label distribution (nullable):\n{csv_df['label'].value_counts(dropna=False)}")
+    print(
+        f"Label distribution (nullable):\n{csv_df['label'].value_counts(dropna=False)}"
+    )
 
     invalid = validate_sequences(csv_df)
     if invalid["heavy"] == 0 and invalid["light"] == 0:
-        print("\nSequence validation: ✅ all VH/VL sequences contain only valid amino acids")
+        print(
+            "\nSequence validation: ✅ all VH/VL sequences contain only valid amino acids"
+        )
     else:
         print("\nSequence validation: ⚠ issues detected")
         print(f"  Heavy chains with invalid residues: {invalid['heavy']}")
