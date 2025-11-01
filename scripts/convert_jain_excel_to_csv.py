@@ -73,6 +73,12 @@ class AssayThreshold:
     original_name: str
 
 
+# Flag thresholds from Jain et al. 2017 PNAS Table 1.
+# Thresholds represent the 90th percentile of approved antibodies (48 of 137).
+# Each cluster contributes 0 or 1 flag; maximum 4 flags per antibody.
+# Labels: 0 flags = specific (label=0), ≥4 flags = non-specific (label=1),
+#         1-3 flags = mild (label=NaN, excluded from binary classification).
+# Note: SGAC-SINS is inverted (< threshold is problematic).
 ASSAY_CLUSTERS: Dict[str, List[AssayThreshold]] = {
     "flag_self_interaction": [
         AssayThreshold(
